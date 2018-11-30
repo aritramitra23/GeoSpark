@@ -54,6 +54,8 @@ trait TestBaseScala extends FunSpec with BeforeAndAfterAll{
   val csvPointInputLocation = resourceFolder + "testpoint.csv"
   val csvPolygonInputLocation = resourceFolder + "testenvelope.csv"
   val unionPolygonInputLocation = resourceFolder + "testunion.csv"
+ 
+  val primayroadsinputlocation = resourceFolder + "primaryroads.csv"
 
   override def beforeAll(): Unit = {
     GeoSparkSQLRegistrator.registerAll(sparkSession)
