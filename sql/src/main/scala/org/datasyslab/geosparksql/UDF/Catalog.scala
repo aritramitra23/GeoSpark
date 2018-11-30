@@ -50,8 +50,7 @@ object Catalog {
     ST_Transform,
     ST_Intersection,
     ST_IsValid,
-    ST_PrecisionReduce,
-    ST_Touches
+    ST_PrecisionReduce
   )
 
   val aggregateExpressions:Seq[UserDefinedAggregateFunction] = Seq(
