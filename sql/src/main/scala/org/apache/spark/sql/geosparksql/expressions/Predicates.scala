@@ -123,19 +123,15 @@ case class ST_Within(inputExpressions: Seq[Expression])
   override def dataType = BooleanType
 }
 
-/**
-  * Test if leftGeometry touches rightGeometry
-  *
-  * @param inputExpressions
-  */
-case class ST_Touches(inputExpressions: Seq[Expression])
+case class ST_Crosses(inputExpressions: Seq[Expression])
   extends Expression with CodegenFallback {
-  override def nullable: Boolean = false
 
   // This is a binary expression
   assert(inputExpressions.length == 2)
 
-  override def toString: String = s" **${ST_Touches.getClass.getName}**  "
+  override def nullable: Boolean = false
+
+  override def toString: String = s" **${ST_Crosses.getClass.getName}**  "
 
   override def children: Seq[Expression] = inputExpressions
 
@@ -147,7 +143,7 @@ case class ST_Touches(inputExpressions: Seq[Expression])
 
     val rightGeometry = GeometrySerializer.deserialize(rightArray)
 
-    return leftGeometry.touches(rightGeometry)
+    return leftGeometry.crosses(rightGeometry)
   }
 
   override def dataType = BooleanType
