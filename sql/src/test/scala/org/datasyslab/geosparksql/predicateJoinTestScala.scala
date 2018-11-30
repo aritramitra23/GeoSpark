@@ -35,6 +35,137 @@ class predicateJoinTestScala extends TestBaseScala {
 
   describe("GeoSpark-SQL Predicate Join Test") {
 
+     //test if single points crosses polygon
+    it("Passed ST_Crosses in point,polygon a join") {
+      val geosparkConf = new GeoSparkConf(sparkSession.sparkContext.getConf)
+      //println(geosparkConf)
+
+      var polygonCsvDf = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(csvPolygonInputLocation)
+      polygonCsvDf.createOrReplaceTempView("polygontable")
+      //polygonCsvDf.show()
+      var polygonDf = sparkSession.sql("select ST_PolygonFromEnvelope(cast(polygontable._c0 as Decimal(24,20)),cast(polygontable._c1 as Decimal(24,20)), cast(polygontable._c2 as Decimal(24,20)), cast(polygontable._c3 as Decimal(24,20))) as polygonshape from polygontable")
+      polygonDf.createOrReplaceTempView("polygondf")
+      //polygonDf.show()
+
+      var pointCsvDF = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(csvPointInputLocation)
+      pointCsvDF.createOrReplaceTempView("pointtable")
+      //pointCsvDF.show()
+      var pointDf = sparkSession.sql("select ST_Point(cast(pointtable._c0 as Decimal(24,20)),cast(pointtable._c1 as Decimal(24,20))) as pointshape from pointtable")
+      pointDf.createOrReplaceTempView("pointdf")
+      //pointDf.show()
+
+      var rangeJoinDf = sparkSession.sql("select * from polygondf, pointdf where ST_Crosses(pointdf.pointshape,polygondf.polygonshape) ")
+
+      rangeJoinDf.explain()
+      rangeJoinDf.show(3)
+      assert(rangeJoinDf.count() == 0)
+    }
+
+    //test with line DF from primayroadsinputlocation crosses given polygon
+    it("Passed ST_Crosses linestring(0,0,900,900),polygon in a join") {
+      val geosparkConf = new GeoSparkConf(sparkSession.sparkContext.getConf)
+      //println(geosparkConf)
+
+      var lineCsvDF = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(primayroadsinputlocation)
+      lineCsvDF.createOrReplaceTempView("linetable")
+      //lineCsvDF.show()
+      //var lineDF = sparkSession.sql("select ST_LineStringFromText(cast(linetable._c0 as Decimal(24,20)),cast(linetable._c1 as Decimal(24,20)), cast(linetable._c2 as Decimal(24,20)), cast(linetable._c3 as Decimal(24,20)),cast(linetable._c4 as Decimal(24,20)),cast(linetable._c5 as Decimal(24,20)),cast(linetable._c6 as Decimal(24,20)),cast(linetable._c7 as Decimal(24,20))) as linestring from linetable")
+      var lineDF = sparkSession.sql("select ST_LineStringFromText(concat(_c0,',',_c1,',',_c2,',',_c3),',') as linestring from linetable")
+      lineDF.show(10)
+      lineDF.createOrReplaceTempView("lineDF")
+
+      var rangeJoinDf = sparkSession.sql("select * from lineDF where ST_Crosses(lineDF.linestring, ST_PolygonFromEnvelope(1.0,100.0,1000.0,1100.0)) ")
+
+
+      rangeJoinDf.explain()
+      rangeJoinDf.show(3)
+      assert(rangeJoinDf.count() == 1)
+    }
+
+    //test if the given line crosses any in polygon DF in csvPolygonInputLocation
+
+    it("Passed ST_Crosses line,polygon in a join") {
+      val geosparkConf = new GeoSparkConf(sparkSession.sparkContext.getConf)
+      //println(geosparkConf)
+      //println("line,polygon")
+
+      var polygonCsvDf = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(csvPolygonInputLocation)
+      polygonCsvDf.createOrReplaceTempView("polygontable")
+      //polygonCsvDf.show()
+      var polygonDf = sparkSession.sql("select ST_PolygonFromEnvelope(cast(polygontable._c0 as Decimal(24,20)),cast(polygontable._c1 as Decimal(24,20)), cast(polygontable._c2 as Decimal(24,20)), cast(polygontable._c3 as Decimal(24,20))) as polygonshape from polygontable")
+      polygonDf.createOrReplaceTempView("polygondf")
+      //polygonDf.show()
+
+      var rangeJoinDf = sparkSession.sql("select * from polygondf where ST_Crosses(ST_LineStringFromText(concat(0,',',0,',',1.02,',',101.4),','), polygondf.polygonshape) ")
+
+
+      rangeJoinDf.explain()
+      rangeJoinDf.show(3)
+      assert(rangeJoinDf.count() == 1)
+    }
+
+    //test when the line just touches a polygon
+
+    it("Passed ST_Crosses touches line,polygon in a join") {
+      val geosparkConf = new GeoSparkConf(sparkSession.sparkContext.getConf)
+      println(geosparkConf)
+      //println("line,polygon")
+
+      var polygonCsvDf = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(csvPolygonInputLocation)
+      polygonCsvDf.createOrReplaceTempView("polygontable")
+      //polygonCsvDf.show()
+      var polygonDf = sparkSession.sql("select ST_PolygonFromEnvelope(cast(polygontable._c0 as Decimal(24,20)),cast(polygontable._c1 as Decimal(24,20)), cast(polygontable._c2 as Decimal(24,20)), cast(polygontable._c3 as Decimal(24,20))) as polygonshape from polygontable")
+      polygonDf.createOrReplaceTempView("polygondf")
+      //polygonDf.show()
+
+      var rangeJoinDf = sparkSession.sql("select * from polygondf where ST_Crosses(ST_LineStringFromText(concat(0,',',0,',',1.01,',',101.01),','), polygondf.polygonshape) ")
+
+
+      rangeJoinDf.explain()
+      rangeJoinDf.show(3)
+      assert(rangeJoinDf.count() == 0)
+    }
+
+    //test line crosses line
+    it("Passed ST_Crosses line and line in a join") {
+      val geosparkConf = new GeoSparkConf(sparkSession.sparkContext.getConf)
+      println(geosparkConf)
+      //println("line,polygon")
+      var lineCsvDF = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(primayroadsinputlocation)
+      lineCsvDF.createOrReplaceTempView("linetable")
+      //lineCsvDF.show()
+      var lineDF = sparkSession.sql("select ST_LineStringFromText(concat(_c0,',',_c1,',',_c2,',',_c3),',') as linestring from linetable")
+      //lineDF.show(10)
+      lineDF.createOrReplaceTempView("lineDF")
+
+      var rangeJoinDf = sparkSession.sql("select * from lineDF where ST_Crosses(ST_LineStringFromText(concat(0,',',900,',',900,',',0),','), lineDF.linestring) ")
+
+
+      rangeJoinDf.explain()
+      rangeJoinDf.show(3)
+      assert(rangeJoinDf.count() == 1)
+    }
+    //line touches line
+    it("Passed ST_Crosses line touches line in a join") {
+      val geosparkConf = new GeoSparkConf(sparkSession.sparkContext.getConf)
+      println(geosparkConf)
+      //println("line,polygon")
+      var lineCsvDF = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(primayroadsinputlocation)
+      lineCsvDF.createOrReplaceTempView("linetable")
+      //lineCsvDF.show()
+      var lineDF = sparkSession.sql("select ST_LineStringFromText(concat(_c0,',',_c1,',',_c2,',',_c3),',') as linestring from linetable")
+      //lineDF.show(10)
+      lineDF.createOrReplaceTempView("lineDF")
+
+      var rangeJoinDf = sparkSession.sql("select * from lineDF where ST_Crosses(ST_LineStringFromText(concat(0,',',0,',',900,',',0),','), lineDF.linestring) ")
+
+
+      rangeJoinDf.explain()
+      rangeJoinDf.show(3)
+      assert(rangeJoinDf.count() == 0)
+    }
+
+    
     it("Passed ST_Contains in a join") {
       val geosparkConf = new GeoSparkConf(sparkSession.sparkContext.getConf)
       println(geosparkConf)
