@@ -57,3 +57,19 @@ SELECT *
 FROM pointdf 
 WHERE ST_Touches(pointdf.arealandmark, ST_PolygonFromEnvelope(1.0,100.0,1000.0,1100.0))
 ```
+
+
+## ST_Crosses
+
+Introduction: Return true if A crosses B
+
+Format: `ST_Within (A:geometry, B:geometry)`
+
+Since: `v1.0.0`
+
+Spark SQL example:
+```SQL
+SELECT * 
+FROM lineDF 
+WHERE ST_Crosses(lineDF.linestring, ST_PolygonFromEnvelope(1.0,100.0,1000.0,1100.0))
+```
