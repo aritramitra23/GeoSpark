@@ -40,6 +40,18 @@ class predicateTestScala extends TestBaseScala {
       resultDf.show()
       assert(resultDf.count() == 999)
     }
+    
+    it("Passed ST_Crosses - with point") {
+      var pointCsvDF = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(csvPointInputLocation)
+      pointCsvDF.createOrReplaceTempView("pointtable")
+      var pointDf = sparkSession.sql("select ST_Point(cast(pointtable._c0 as Decimal(24,20)), cast(pointtable._c1 as Decimal(24,20))) as arealandmark from pointtable")
+      pointDf.createOrReplaceTempView("pointdf")
+
+      var resultDf = sparkSession.sql("select * from pointdf where ST_Crosses(ST_PolygonFromEnvelope(1.0,100.0,1000.0,1100.0), pointdf.arealandmark)")
+      resultDf.show()
+      assert(resultDf.count() == 0)
+    }
+    
     it("Passed ST_Intersects") {
       var pointCsvDF = sparkSession.read.format("csv").option("delimiter", ",").option("header", "false").load(csvPointInputLocation)
       pointCsvDF.createOrReplaceTempView("pointtable")
