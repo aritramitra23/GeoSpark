@@ -63,9 +63,9 @@ WHERE ST_Touches(pointdf.arealandmark, ST_PolygonFromEnvelope(1.0,100.0,1000.0,1
 
 Introduction: Return true if A crosses B
 
-Format: `ST_Within (A:geometry, B:geometry)`
+Format: `ST_Crosses (A:geometry, B:geometry)`
 
-Since: `v1.0.0`
+Since: `v1.2.0`
 
 Spark SQL example:
 ```SQL
